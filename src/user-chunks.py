@@ -12,7 +12,7 @@ with open(src, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 for uid, username in data.items():
-    h = hashlib.md5(uid.encode()).hexdigest()[:2]
+    h = hashlib.md5(username.encode()).hexdigest()[:2]
 
     if h not in files:
         files[h] = open(out / f"{h}.json", "w", encoding="utf-8")
