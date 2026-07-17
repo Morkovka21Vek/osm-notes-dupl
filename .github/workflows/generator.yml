@@ -1,7 +1,10 @@
-name: Download OSM Notes
+name: Generator
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   download:
@@ -22,14 +25,42 @@ jobs:
           bunzip2 planet-notes-latest.osn.bz2
 
       - name: Check size
-        run: ls -h planet-notes-latest.osn
+        run: ls -lh planet-notes-latest.osn
 
       - name: Run parser
         run: python3 src/parser.py
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: osm-notes.bin
           path: notes.bin
           retention-days: 7
+
+  analysis:
+    needs: download
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: osm-notes.bin
+
+      - name: ls
+        run: ls -al
+
+      - name: Generate json
+        run: python3 src/generator.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add by_users.json
+          git commit -m "chore: Update by_users.json" || echo "No changes"
+          git push
