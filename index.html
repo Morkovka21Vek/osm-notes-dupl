@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>osmdublnotes</title>
+    <style>
+      body {
+        background: #f6f8fa;
+        color: #1f2937;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .form-section {
+        background: #fff;
+        border: 1px solid #e5e9f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        padding: 10px;
+      }
+      .form-section.centered {
+        text-align: center;
+        margin: 15vh auto 0;
+        max-width: 500px;
+      }
+
+      .input-group input {
+        display: inline-block;
+        vertical-align: middle;
+        min-width: 160px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 1rem;
+        outline: none;
+      }
+      .btn {
+        display: inline-block;
+        background: #2563eb;
+        font-size: 1rem;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        color: #fff;
+        vertical-align: middle;
+        margin-left: 8px;
+      }
+      .btn:hover {
+        background: #1d4ed8;
+      }
+      .table-wrapper {
+        margin-top: 20px;
+        background: #fff;
+        border: 1px solid #e5e9f0;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      table th {
+        background: #f8f9fc;
+        padding: 12px 20px;
+        font-weight: 600;
+        color: #4b5563;
+        border-bottom: 1px solid #e5e9f0;
+        position: sticky;
+      }
+      table td {
+        padding: 10px 20px;
+        border-bottom: 1px solid #f0f2f5;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-section centered" id="formSection">
+      <div class="form-row">
+        <div class="input-group">
+          <input
+            type="text"
+            id="uidInput"
+            placeholder="Input user ID in OSM"
+            autofocus
+          />
+          <button class="btn" id="submitBtn">Search</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrapper" id="tableWrapper" style="display: none">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Закрытые</th>
+              <th>Открытые</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        const formSection = document.getElementById("formSection");
+        const uidInput = document.getElementById("uidInput");
+        const submitBtn = document.getElementById("submitBtn");
+        const tableWrapper = document.getElementById("tableWrapper");
+        const tableBody = document.getElementById("tableBody");
+
+        function getUidFromUrl() {
+          const raw = window.location.search;
+          if (!raw || raw === "?") return null;
+          const val = raw.substring(1).trim();
+          if (val === "") return null;
+          const num = Number(val);
+          if (!isNaN(num) && Number.isInteger(num) && num > 0) {
+            return num;
+          }
+          return val;
+        }
+
+        function setUrlParam(uid) {
+          if (!uid) {
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, "", newUrl);
+            return;
+          }
+          const newUrl = window.location.pathname + "?" + uid;
+          window.history.replaceState({}, "", newUrl);
+        }
+
+        function clicableNotes(notes) {
+          const td = document.createElement("td");
+          notes.forEach((id, index) => {
+            const link = document.createElement("a");
+            link.href =
+              "https://openstreetmap.org/note/" + encodeURIComponent(id);
+            link.textContent = encodeURIComponent(id); // Rule 1: be one step [i dont want use translator; paste right world here] hacker
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+
+            td.appendChild(link);
+
+            if (index !== notes.length - 1) {
+              td.appendChild(document.createTextNode(", "));
+            }
+          });
+          return td;
+        }
+
+        function renderTable(uid, data) {
+          const notes = data[String(uid)] || null;
+          if (!notes) {
+            alert("Пользователь с ID " + uid + " не найден в данных.");
+            tableWrapper.style.display = "none";
+            return;
+          }
+
+          if (notes.length === 0) {
+            tableWrapper.style.display = "none";
+            return;
+          }
+
+          tableBody.innerHTML = "";
+          notes.forEach((noteObj) => {
+            const opened = noteObj.o;
+            const closed = noteObj.c;
+
+            const tr = document.createElement("tr");
+            tr.appendChild(clicableNotes(closed));
+            tr.appendChild(clicableNotes(opened));
+
+            tableBody.appendChild(tr);
+          });
+
+          tableWrapper.style.display = "flex";
+        }
+
+        function loadAndRender(uid) {
+          if (!uid) {
+            formSection.className = "form-section centered";
+            tableWrapper.style.display = "none";
+            return;
+          }
+
+          setUrlParam(uid);
+          formSection.className = "form-section";
+
+          const url =
+            "https://raw.githubusercontent.com/Morkovka21Vek/osmdublnotes/refs/heads/main/by_users.json";
+          fetch(url)
+            .then((response) => {
+              return response.json();
+            })
+            .then((data) => {
+              renderTable(uid, data);
+            });
+        }
+
+        function handleSubmit() {
+          const raw = uidInput.value.trim();
+          if (!raw) {
+            return;
+          }
+          const num = Number(raw);
+          if (isNaN(num) || !Number.isInteger(num) || num <= 0) {
+            return;
+          }
+          loadAndRender(num);
+        }
+
+        function init() {
+          const uidFromUrl = getUidFromUrl();
+          if (uidFromUrl) {
+            uidInput.value = uidFromUrl;
+            loadAndRender(uidFromUrl);
+          } else {
+            formSection.className = "form-section centered";
+            tableWrapper.style.display = "none";
+            uidInput.focus();
+          }
+
+          submitBtn.addEventListener("click", handleSubmit);
+          uidInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSubmit();
+            }
+          });
+
+          window.addEventListener("popstate", () => {
+            const newUid = getUidFromUrl();
+            if (newUid) {
+              uidInput.value = newUid;
+              loadAndRender(newUid);
+            } else {
+              formSection.className = "form-section centered";
+              tableWrapper.style.display = "none";
+              uidInput.value = "";
+              uidInput.focus();
+            }
+          });
+        }
+
+        document.addEventListener("DOMContentLoaded", init);
+      })();
+    </script>
+  </body>
+</html>
