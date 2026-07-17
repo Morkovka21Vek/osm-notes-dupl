@@ -132,7 +132,7 @@
           window.history.replaceState({}, "", newUrl);
         }
 
-        function clicableNotes(notes) {
+        function clickableNotes(notes) {
           const td = document.createElement("td");
           notes.forEach((id, index) => {
             const link = document.createElement("a");
@@ -170,8 +170,8 @@
             const closed = noteObj.c;
 
             const tr = document.createElement("tr");
-            tr.appendChild(clicableNotes(closed));
-            tr.appendChild(clicableNotes(opened));
+            tr.appendChild(clickableNotes(closed));
+            tr.appendChild(clickableNotes(opened));
 
             tableBody.appendChild(tr);
           });
