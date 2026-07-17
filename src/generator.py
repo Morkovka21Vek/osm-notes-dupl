@@ -43,7 +43,7 @@ for (lat, lon), location_notes in notes.items():
             elif not note["closed"]:
                 opened_notes.append(note["id"])
 
-        if closed_notes:
+        if closed_notes and opened_notes:
             result[uid].append({
                 "o": opened_notes,
                 "c": closed_notes,
