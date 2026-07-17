@@ -1,6 +1,5 @@
 import struct
 from collections import defaultdict
-import os
 import json
 
 record = struct.Struct("<IiiBI")
@@ -50,10 +49,5 @@ for (lat, lon), location_notes in notes.items():
                 "c": closed_notes,
             })
 
-
-out = []
-for uid, places in result.items():
-    out.append({"u": uid, "n": places})
-
 with open("by_users.json", "w", encoding="utf-8") as file:
-    json.dump(out, file, ensure_ascii=False, separators=(",", ":"))
+    json.dump(result, file, ensure_ascii=False, separators=(",", ":"))
