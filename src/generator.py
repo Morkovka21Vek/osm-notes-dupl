@@ -39,9 +39,9 @@ for (lat, lon), location_notes in notes.items():
 
         for note in location_notes:
             if note["closed"] and note["uid"] == uid:
-                opened_notes.append(note["id"])
-            elif not note["closed"]:
                 closed_notes.append(note["id"])
+            elif not note["closed"]:
+                opened_notes.append(note["id"])
 
         if closed_notes:
             result[uid].append({
