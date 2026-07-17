@@ -50,9 +50,6 @@ jobs:
         with:
           name: osm-notes.bin
 
-      - name: ls
-        run: ls -al
-
       - name: Generate json
         run: python3 src/generator.py
 
@@ -61,6 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          git pull
           git add by_users.json
           git commit -m "chore: Update by_users.json" || echo "No changes"
           git push
