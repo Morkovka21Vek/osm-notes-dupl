@@ -2,9 +2,20 @@ name: Generator
 
 on:
   workflow_dispatch:
+    inputs:
+      download:
+        description: Download a fresh OSM dump
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "deploy"
+  cancel-in-progress: false
 
 jobs:
   download:
@@ -14,15 +25,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Download OSM notes dump
+      - name: Restore OSM dump cache
+        if: ${{ !inputs.download }}
+        uses: actions/cache@v4
+        with:
+          path: planet-notes-latest.osn
+          key: osm-notes-dump
+
+      - name: Download OSM notes dump  & Extract
+        if: ${{ inputs.download || !hashFiles('planet-notes-latest.osn') }}
         run: |
           curl -L --fail \
-            -o planet-notes-latest.osn.bz2 \
-            https://planet.openstreetmap.org/notes/planet-notes-latest.osn.bz2
-
-      - name: Extract
-        run: |
-          bunzip2 planet-notes-latest.osn.bz2
+            https://planet.openstreetmap.org/notes/planet-notes-latest.osn.bz2 \
+            | bzip2 -dc > planet-notes-latest.osn
 
       - name: Check size
         run: ls -lh planet-notes-latest.osn
@@ -33,15 +48,10 @@ jobs:
       - name: Upload notes
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: osm-notes
-          path: notes.bin
-          retention-days: 3
-
-      - name: Upload users
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: osm-users
-          path: users.json
+          name: parser-output
+          path: |
+            notes.bin
+            users.json
           retention-days: 3
 
   analysis:
@@ -55,7 +65,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v8.0.1
         with:
-          name: osm-notes
+          name: parser-output
 
       - name: Generate json
         run: python3 src/generator.py
@@ -78,7 +88,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v8.0.1
         with:
-          name: osm-users
+          name: parser-output
 
       - name: Split json
         run: python3 src/user-chunks.py
@@ -90,17 +100,18 @@ jobs:
           path: users/
           retention-days: 1
 
-  push:
+  deploy:
     needs: 
       - users
       - analysis
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: data
 
       - name: Download by-users
         uses: actions/download-artifact@v8.0.1
@@ -113,13 +124,15 @@ jobs:
           name: users-list
           path: users/
 
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Setup Pages
+        uses: actions/configure-pages@v6.0.0
 
-          git add by_users.json users/
-          git commit -m "chore: Update data" || echo "No changes"
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: '.'
 
-          git push origin HEAD:data
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
 
