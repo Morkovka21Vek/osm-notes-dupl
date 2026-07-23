@@ -127,6 +127,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v6.0.0
 
+      - name: HTML/CSS/JS Minifier
+        uses: docker://devatherock/minify-js:3.1.0
+        with:
+          add_suffix: false
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5.0.0
         with:
