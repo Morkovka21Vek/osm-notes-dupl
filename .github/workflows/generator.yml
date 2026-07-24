@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
-    inputs:
-      download:
-        description: Download a fresh OSM dump
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -27,15 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Restore OSM dump cache
-        if: ${{ !inputs.download }}
-        uses: actions/cache@v4
-        with:
-          path: planet-notes-latest.osn
-          key: osm-notes-dump
-
       - name: Download OSM notes dump  & Extract
-        if: ${{ inputs.download || !hashFiles('planet-notes-latest.osn') }}
         run: |
           curl -L --fail \
             https://planet.openstreetmap.org/notes/planet-notes-latest.osn.bz2 \
@@ -96,13 +83,34 @@ jobs:
           name: dupl-notes
 
       - name: Download boundaries
-        run: curl -o osm-countries.geojson https://osm-countries-geojson.monicz.dev/osm-countries-0-01.geojson
+        run: curl -L https://osm-countries-geojson.monicz.dev/osm-countries-0-01.geojson.br | brotli -d > osm-countries.geojson
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+          pip install -r requirements.txt
 
       - name: Generate pages
         run: python3 src/by_countries.py
+
+      - name: Convert Markdown to HTML
+        run: |
+          find . -name '*.md' | while read f; do
+            dir="$(basename "$(dirname "$f")")"
+
+            if [ "$dir" = "." ]; then
+                title="OSM Notes Duplicates"
+            else
+                title="$dir"
+            fi
+
+            pandoc "$f" \
+                -s \
+                --metadata title="$title" \
+                -c "/osm-notes-dupl/style.css" \
+                -o "${f%.md}.html"
+          done
 
       - name: Setup Pages
         uses: actions/configure-pages@v6.0.0

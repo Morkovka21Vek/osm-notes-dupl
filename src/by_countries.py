@@ -48,28 +48,23 @@ for pos, notes in data.items():
 
 
 for code, notes in result.items():
-    out = Path(f"countries/{code}")
-    out.mkdir(parents=True, exist_ok=True)
+    out = Path(f"{code}")
+    out.mkdir(exist_ok=True)
 
     with open(f"{out}/index.md", "w", encoding="utf-8") as file:
-        s = f"""
-# {code}
-[home](../)
-
+        s = """
 | Closed | Opened |
 | --- | --- |
 """
         for l in notes:
-            closed = [f"[{n}](https://openstreetmap.org/note/{n})" for n in l["c"]]
-            opened = [f"[{n}](https://openstreetmap.org/note/{n})" for n in l["o"]]
+            closed = [f'<a href="https://openstreetmap.org/note/{n}" target="_blank" rel="noopener noreferrer">{n}</a>' for n in l["c"]]
+            opened = [f'<a href="https://openstreetmap.org/note/{n}" target="_blank" rel="noopener noreferrer">{n}</a>' for n in l["o"]]
             s += f"| {", ".join(closed)} | {", ".join(opened)} |\n"
         file.write(s)
 
 with open(f"index.md", "w", encoding="utf-8") as file:
     countries = [f"[{code}](./{code})" for code, notes in result.items()]
     s = f"""
-# OSM Notes Duplicates
-
 > A list of potential duplicate OpenStreetMap notes. Each entry contains both open and closed notes created at the same coordinates.
 
 {" ".join(countries)}
