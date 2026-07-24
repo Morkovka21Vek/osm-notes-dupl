@@ -1,6 +1,8 @@
 name: Generator
 
 on:
+  schedule:
+    - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       download:
@@ -51,7 +53,6 @@ jobs:
           name: parser-output
           path: |
             notes.bin
-            users.json
           retention-days: 3
 
   analysis:
@@ -67,42 +68,18 @@ jobs:
         with:
           name: parser-output
 
-      - name: Generate json
+      - name: Find duplicates
         run: python3 src/generator.py
 
-      - name: Upload by-users
+      - name: Upload duplicates
         uses: actions/upload-artifact@v7.0.1
         with:
-          name: by-users
-          path: by_users.json
-          retention-days: 1
-
-  users:
-    needs: download
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Download Artifact
-        uses: actions/download-artifact@v8.0.1
-        with:
-          name: parser-output
-
-      - name: Split json
-        run: python3 src/user-chunks.py
-
-      - name: Upload users list
-        uses: actions/upload-artifact@v7.0.1
-        with:
-          name: users-list
-          path: users/
+          name: dupl-notes
+          path: dupl_notes.json
           retention-days: 1
 
   deploy:
     needs: 
-      - users
       - analysis
     environment:
       name: github-pages
@@ -113,24 +90,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Download by-users
+      - name: Download duplicates
         uses: actions/download-artifact@v8.0.1
         with:
-          name: by-users
+          name: dupl-notes
 
-      - name: Download users list
-        uses: actions/download-artifact@v8.0.1
-        with:
-          name: users-list
-          path: users/
+      - name: Download boundaries
+        run: curl -o osm-countries.geojson https://osm-countries-geojson.monicz.dev/osm-countries-0-01.geojson
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate pages
+        run: python3 src/by_countries.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v6.0.0
-
-      - name: HTML/CSS/JS Minifier
-        uses: docker://devatherock/minify-js:3.1.0
-        with:
-          add_suffix: false
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5.0.0

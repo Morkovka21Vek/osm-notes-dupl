@@ -4,7 +4,7 @@ import json
 
 record = struct.Struct("<IiiBI")
 
-notes = {}
+notes = defaultdict(lambda: {"o": [], "c": []})
 
 with open("notes.bin", "rb") as f:
     while True:
@@ -12,42 +12,12 @@ with open("notes.bin", "rb") as f:
         if not data:
             break
 
-        note_id, lat, lon, closed, uid = record.unpack(data)
+        note_id, lat, lon, closed, _ = record.unpack(data)
+        notes[(lat, lon)]["c" if closed else "o"].append(note_id)
 
-        key = (lat, lon)
+#result = {f"{lat*0.0000001};{lon*0.0000001}": group for (lat, lon), group in notes.items() if group["o"] and group["c"]}
+result = {f"{lat};{lon}": group for (lat, lon), group in notes.items() if group["o"] and group["c"]}
 
-        notes.setdefault(key, []).append({
-            "id": note_id,
-            "closed": bool(closed),
-            "uid": uid,
-        })
-
-result = defaultdict(list)
-
-for (lat, lon), location_notes in notes.items():
-    users = set(
-        n["uid"] for n in location_notes if n["closed"]
-    )
-
-    for uid in users:
-
-        if uid == 0:
-            continue
-
-        opened_notes = []
-        closed_notes = []
-
-        for note in location_notes:
-            if note["closed"] and note["uid"] == uid:
-                closed_notes.append(note["id"])
-            elif not note["closed"]:
-                opened_notes.append(note["id"])
-
-        if closed_notes and opened_notes:
-            result[uid].append({
-                "o": opened_notes,
-                "c": closed_notes,
-            })
-
-with open("by_users.json", "w", encoding="utf-8") as file:
+with open("dupl_notes.json", "w", encoding="utf-8") as file:
     json.dump(result, file, ensure_ascii=False, separators=(",", ":"))
+    #json.dump(result, file, ensure_ascii=False, indent=4)
