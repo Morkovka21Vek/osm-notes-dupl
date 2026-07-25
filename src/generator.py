@@ -12,7 +12,9 @@ with open("notes.bin", "rb") as f:
         if not data:
             break
 
-        note_id, lat, lon, closed, _ = record.unpack(data)
+        note_id, lat, lon, closed, uid = record.unpack(data)
+        if uid in [3199858, 5060057]: # bot accounts
+            continue
         notes[(lat, lon)]["c" if closed else "o"].append(note_id)
 
 #result = {f"{lat*0.0000001};{lon*0.0000001}": group for (lat, lon), group in notes.items() if group["o"] and group["c"]}
