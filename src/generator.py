@@ -2,7 +2,7 @@ import struct
 from collections import defaultdict
 import json
 
-record = struct.Struct("<IiiBI")
+record = struct.Struct("<IiiBBIB")
 
 notes = defaultdict(lambda: {"o": [], "c": []})
 
@@ -12,10 +12,10 @@ with open("notes.bin", "rb") as f:
         if not data:
             break
 
-        note_id, lat, lon, closed, uid = record.unpack(data)
+        note_id, lat, lon, commented, closed, uid, stop_word = record.unpack(data)
         if uid in [3199858, 5060057]: # bot accounts
             continue
-        notes[(lat, lon)]["c" if closed else "o"].append(note_id)
+        notes[(lat, lon)]["c" if closed else "o"].append((note_id, commented+stop_word*2))
 
 #result = {f"{lat*0.0000001};{lon*0.0000001}": group for (lat, lon), group in notes.items() if group["o"] and group["c"]}
 result = {f"{lat};{lon}": group for (lat, lon), group in notes.items() if group["o"] and group["c"]}

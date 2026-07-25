@@ -57,8 +57,8 @@ for code, notes in result.items():
 | --- | --- |
 """
         for l in notes:
-            closed = [f'<a href="https://openstreetmap.org/note/{n}" target="_blank" rel="noopener noreferrer">{n}</a>' for n in l["c"]]
-            opened = [f'<a href="https://openstreetmap.org/note/{n}" target="_blank" rel="noopener noreferrer">{n}</a>' for n in l["o"]]
+            closed = [f'<a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a>' for n in l["c"]]
+            opened = [f'<a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a>' for n in l["o"]]
             s += f"| {", ".join(closed)} | {", ".join(opened)} |\n"
         file.write(s)
 
