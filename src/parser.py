@@ -17,7 +17,8 @@ with open("notes.bin", "wb") as out:
                 elif comment.attrib.get("action") == "commented":
                     commented = True
 
-                if any(word in (comment.text or "").lower() for word in wordlist.DUPLICATE_STOP_WORDS):
+                text = (comment.text or "").lower()
+                if any(word in text for word in wordlist.DUPLICATE_STOP_WORDS):
                     stop_word = True
 
             out.write(record.pack(
