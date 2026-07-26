@@ -97,3 +97,7 @@ p {
 .stop_word {
   background-color: orange;
 }
+
+a:visited.commented {
+    color: #217498;
+}

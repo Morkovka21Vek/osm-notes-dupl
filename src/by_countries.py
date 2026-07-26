@@ -53,6 +53,9 @@ for code, notes in result.items():
 
     with open(f"{out}/index.md", "w", encoding="utf-8") as file:
         s = """
+> <span class="commented">green</span> - commented<br>
+> <span class="stop_word">orange</span> - stop word found (eg duplicate)
+
 | Closed | Opened |
 | --- | --- |
 """

@@ -116,6 +116,8 @@ jobs:
         uses: docker://devatherock/minify-js:3.1.0
         with:
           add_suffix: false
+          exclusions: |
+            style.css
 
       - name: Setup Pages
         uses: actions/configure-pages@v6.0.0
