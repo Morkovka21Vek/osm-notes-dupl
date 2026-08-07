@@ -94,25 +94,7 @@ jobs:
       - name: Generate pages
         run: python3 src/by_countries.py
 
-      - name: Convert Markdown to HTML
-        run: |
-          find . -name '*.md' | while read f; do
-            dir="$(basename "$(dirname "$f")")"
-
-            if [ "$dir" = "." ]; then
-                title="OSM Notes Duplicates"
-            else
-                title="$dir"
-            fi
-
-            pandoc "$f" \
-                -s \
-                --metadata title="$title" \
-                -c "/osm-notes-dupl/style.css" \
-                -o "${f%.md}.html"
-          done
-
-      - name: HTML/CSS/JS Minifier
+      - name: HTML Minifier
         uses: docker://devatherock/minify-js:3.1.0
         with:
           add_suffix: false
@@ -125,7 +107,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5.0.0
         with:
-          path: '.'
+          path: './pages'
 
       - name: Deploy to GitHub Pages
         id: deployment

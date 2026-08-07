@@ -47,32 +47,28 @@ for pos, notes in data.items():
         result[c].append(notes)
 
 
+with open("templates/country.html", "r", encoding="utf-8") as f:
+    country_template = f.read()
+
 for code, notes in result.items():
-    out = Path(f"{code}")
-    out.mkdir(exist_ok=True)
+    out = Path(f"pages/{code}")
+    out.mkdir(exist_ok=True, parents=True)
 
-    with open(f"{out}/index.md", "w", encoding="utf-8") as file:
-        s = """
-> <span class="commented">green</span> - commented<br>
-> <span class="stop_word">orange</span> - stop word found (eg duplicate)
-
-| Closed | Opened |
-| --- | --- |
-"""
+    with open(f"{out}/index.html", "w", encoding="utf-8") as file:
+        html = country_template.replace("<!-- Country code -->", code)
+        s = ""
         for l in notes:
             closed = [f'<a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a>' for n in l["c"]]
             opened = [f'<a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a>' for n in l["o"]]
-            s += f"| {", ".join(closed)} | {", ".join(opened)} |\n"
-        file.write(s)
+            s += f"<tr>\n  <td>{", ".join(closed)}</td>\n  <td>{", ".join(opened)}</td>\n</tr>\n"
+        html = html.replace("<!-- Notes table -->", s)
+        file.write(html)
 
-with open(f"index.md", "w", encoding="utf-8") as file:
-    countries = [f"[{code}](./{code})" for code, notes in result.items()]
-    s = f"""
-> A list of potential duplicate OpenStreetMap notes. Each entry contains both open and closed notes created at the same coordinates.
+out = Path(f"pages")
+out.mkdir(exist_ok=True)
 
-{" ".join(countries)}
-
-
-> Countries boundaries from [osm-countries-geojson](https://osm-countries-geojson.monicz.dev). Data [©OpenStreetMap](https://www.openstreetmap.org) contributors.
-"""
-    file.write(s)
+with open(f"{out}/index.html", "w", encoding="utf-8") as file:
+    with open("templates/main.html", "r", encoding="utf-8") as f:
+        main_template = f.read()
+    countries = [f'<a href="./{code}">{code}</a>' for code, notes in result.items()]
+    file.write(main_template.replace("<!-- Countries list -->", " ".join(countries)))
