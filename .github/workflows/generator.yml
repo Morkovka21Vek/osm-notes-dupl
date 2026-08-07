@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
+    inputs:
+      use_previous_artifact:
+        type: boolean
+        description: "Use previous artifact"
+        default: false
 
 permissions:
   contents: read
@@ -16,6 +21,7 @@ concurrency:
 
 jobs:
   download:
+    if: ${{ !inputs.use_previous_artifact }}
     runs-on: ubuntu-latest
 
     steps:
@@ -43,6 +49,7 @@ jobs:
           retention-days: 3
 
   analysis:
+    if: ${{ !inputs.use_previous_artifact }}
     needs: download
     runs-on: ubuntu-latest
 
@@ -68,6 +75,7 @@ jobs:
   deploy:
     needs: 
       - analysis
+    if: ${{ always() && (needs.analysis.result == 'success' || needs.analysis.result == 'skipped') }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -78,41 +86,37 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Download duplicates
+        if: ${{ !inputs.use_previous_artifact }}
         uses: actions/download-artifact@v8.0.1
         with:
           name: dupl-notes
+
+      - name: Download previous artifact
+        if: ${{ inputs.use_previous_artifact }}
+        uses: dawidd6/action-download-artifact@v21
+        with:
+          workflow: generator.yml
+          workflow_conclusion: success
+          branch: main
+          name: dupl-notes
+          search_artifacts: true
 
       - name: Download boundaries
         run: curl -L https://osm-countries-geojson.monicz.dev/osm-countries-0-01.geojson.br | brotli -d > osm-countries.geojson
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y pandoc
           pip install -r requirements.txt
 
       - name: Generate pages
         run: python3 src/by_countries.py
 
-      - name: Convert Markdown to HTML
+      - name: Copy style.css
         run: |
-          find . -name '*.md' | while read f; do
-            dir="$(basename "$(dirname "$f")")"
+          mkdir -p pages
+          cp style.css pages/style.css
 
-            if [ "$dir" = "." ]; then
-                title="OSM Notes Duplicates"
-            else
-                title="$dir"
-            fi
-
-            pandoc "$f" \
-                -s \
-                --metadata title="$title" \
-                -c "/osm-notes-dupl/style.css" \
-                -o "${f%.md}.html"
-          done
-
-      - name: HTML/CSS/JS Minifier
+      - name: HTML Minifier
         uses: docker://devatherock/minify-js:3.1.0
         with:
           add_suffix: false
@@ -125,7 +129,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5.0.0
         with:
-          path: '.'
+          path: './pages'
 
       - name: Deploy to GitHub Pages
         id: deployment
