@@ -47,7 +47,7 @@ for pos, notes in data.items():
         result[c].append(notes)
 
 
-with open("templates/country.html", "r", encoding="utf-8") as f:
+with open("src/templates/country.html", "r", encoding="utf-8") as f:
     country_template = f.read()
 
 for code, notes in result.items():
@@ -68,7 +68,7 @@ out = Path(f"pages")
 out.mkdir(exist_ok=True)
 
 with open(f"{out}/index.html", "w", encoding="utf-8") as file:
-    with open("templates/main.html", "r", encoding="utf-8") as f:
+    with open("src/templates/main.html", "r", encoding="utf-8") as f:
         main_template = f.read()
     countries = [f'<a href="./{code}">{code}</a>' for code, notes in result.items()]
     file.write(main_template.replace("<!-- Countries list -->", " ".join(countries)))
