@@ -99,6 +99,7 @@ jobs:
           workflow_conclusion: success
           branch: main
           name: dupl-notes
+          search_artifacts: true
 
       - name: Download boundaries
         run: curl -L https://osm-countries-geojson.monicz.dev/osm-countries-0-01.geojson.br | brotli -d > osm-countries.geojson
