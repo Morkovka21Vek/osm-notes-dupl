@@ -93,7 +93,7 @@ jobs:
 
       - name: Download previous artifact
         if: ${{ inputs.use_previous_artifact }}
-        uses: dawidd6/action-download-artifact@v11
+        uses: dawidd6/action-download-artifact@v21
         with:
           workflow: generator.yml
           workflow_conclusion: success
@@ -109,6 +109,11 @@ jobs:
 
       - name: Generate pages
         run: python3 src/by_countries.py
+
+      - name: Copy style.css
+        run: |
+          mkdir -p pages
+          cp style.css pages/style.css
 
       - name: HTML Minifier
         uses: docker://devatherock/minify-js:3.1.0
