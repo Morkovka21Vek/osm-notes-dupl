@@ -1,10 +1,10 @@
 import struct
 from collections import defaultdict
-import json
+import csv
 
-record = struct.Struct("<IiiBBIB")
+record = struct.Struct("<IiiBBIBQ")
 
-notes = defaultdict(lambda: {"o": [], "c": []})
+notes = defaultdict(lambda: {"o": [], "c": [], "time": 0})
 
 with open("notes.bin", "rb") as f:
     while True:
@@ -12,14 +12,24 @@ with open("notes.bin", "rb") as f:
         if not data:
             break
 
-        note_id, lat, lon, commented, closed, uid, stop_word = record.unpack(data)
+        note_id, lat, lon, commented, closed, uid, stop_word, time = record.unpack(data)
         if uid in [3199858, 5060057]: # bot accounts
             continue
         notes[(lat, lon)]["c" if closed else "o"].append((note_id, commented+stop_word*2))
 
-#result = {f"{lat*0.0000001};{lon*0.0000001}": group for (lat, lon), group in notes.items() if group["o"] and group["c"]}
-result = {f"{lat};{lon}": group for (lat, lon), group in notes.items() if group["o"] and group["c"]}
+        if time > notes[(lat, lon)]["time"]:
+            notes[(lat, lon)]["time"] = time
 
-with open("dupl_notes.json", "w", encoding="utf-8") as file:
-    json.dump(result, file, ensure_ascii=False, separators=(",", ":"))
-    #json.dump(result, file, ensure_ascii=False, indent=4)
+with open("dupl_notes.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow(["lat", "lon", "time", "open_notes", "closed_notes"])
+
+    for (lat, lon), group in notes.items():
+        if group["o"] and group["c"]:
+            writer.writerow([
+                lat,
+                lon,
+                group["time"],
+                ";".join(f"{note_id}:{score}" for note_id, score in group["o"]),
+                ";".join(f"{note_id}:{score}" for note_id, score in group["c"]),
+            ])

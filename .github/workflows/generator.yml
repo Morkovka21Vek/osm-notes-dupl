@@ -69,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@v7.0.1
         with:
           name: dupl-notes
-          path: dupl_notes.json
+          path: dupl_notes.csv
           retention-days: 1
 
   deploy:
