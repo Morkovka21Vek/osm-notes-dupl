@@ -1,12 +1,10 @@
 import json
+import csv
 from collections import defaultdict
 from shapely.geometry import Point, shape
 from shapely.strtree import STRtree
 from pathlib import Path
 import html
-
-with open("dupl_notes.json", "r", encoding="utf-8") as f:
-    data = json.load(f)
 
 with open("osm-countries.geojson", "r", encoding="utf-8") as f:
     geojson = json.load(f)
@@ -37,20 +35,33 @@ def get_countries(lat, lon):
 
 result = defaultdict(list)
 
-for pos, notes in data.items():
-    lat, lon = map(float, pos.split(';'))
+with open("dupl_notes.csv", "r", newline="", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
 
-    lat = lat / 10_000_000
-    lon = lon / 10_000_000
+    for row in reader:
+        lat = float(row["lat"]) / 10_000_000
+        lon = float(row["lon"]) / 10_000_000
 
-    for c in get_countries(lat, lon):
-        result[c].append(notes)
+        notes = {"o": [], "c": [], "time": 0}
+
+        for item in row["open_notes"].split(";"):
+            notes["o"].append(tuple(map(int, item.split(":"))))
+
+        for item in row["closed_notes"].split(";"):
+            notes["c"].append(tuple(map(int, item.split(":"))))
+
+        notes["time"] = int(row["time"])
+
+        for c in get_countries(lat, lon):
+            result[c].append(notes)
 
 
 with open("src/templates/country.html", "r", encoding="utf-8") as f:
     country_template = f.read()
 
 for code, notes in result.items():
+    notes.sort(key=lambda x: x["time"], reverse=True)
+
     out = Path(f"pages/{code}")
     out.mkdir(exist_ok=True, parents=True)
 
