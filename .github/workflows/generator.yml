@@ -114,13 +114,14 @@ jobs:
       - name: Copy style.css
         run: |
           mkdir -p pages
-          cp style.css pages/style.css
+          cp style.min.css pages/style.css
 
       - name: HTML Minifier
         uses: docker://devatherock/minify-js:3.1.0
         with:
+          directory: 'pages'
           add_suffix: false
-          exclusions: |
+          exclusions: |-
             style.css
 
       - name: Setup Pages
