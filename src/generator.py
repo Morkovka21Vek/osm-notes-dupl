@@ -20,7 +20,7 @@ with open("notes.bin", "rb") as f:
         if time > notes[(lat, lon)]["time"]:
             notes[(lat, lon)]["time"] = time
 
-with open("dupl_notes.csv", "w", newline="", encoding="utf-8") as f:
+with open("dupl_closed_notes.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.writer(f)
     writer.writerow(["lat", "lon", "time", "open_notes", "closed_notes"])
 
@@ -33,3 +33,17 @@ with open("dupl_notes.csv", "w", newline="", encoding="utf-8") as f:
                 ";".join(f"{note_id}:{score}" for note_id, score in group["o"]),
                 ";".join(f"{note_id}:{score}" for note_id, score in group["c"]),
             ])
+
+with open("dupl_opened_notes.csv", "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow(["lat", "lon", "time", "open_notes"])
+
+    for (lat, lon), group in notes.items():
+        if len(group["o"]) > 1:
+            writer.writerow([
+                lat,
+                lon,
+                group["time"],
+                ";".join(f"{note_id}:{score}" for note_id, score in group["o"]),
+            ])
+
