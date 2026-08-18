@@ -109,8 +109,8 @@ for code, notes in result_opened.items():
         html = country_template.replace("<!-- Country code -->", code)
         s = ""
         for l in notes:
-            opened = [f'  <li><a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a></li>\n' for n in l["o"]]
-            s += ", ".join(closed)
+            opened = [f'<a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a>\n' for n in l["o"]]
+            s += f'  <li>{", ".join(opened)}</li>'
         html = html.replace("<!-- Notes list -->", s)
         file.write(html)
 
