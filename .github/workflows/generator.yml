@@ -69,7 +69,7 @@ jobs:
 
       - name: Download previous artifact
         if: ${{ inputs.use_previous_artifact1 }}
-        uses: dawidd6/action-download-artifact@v21
+        uses: dawidd6/action-download-artifact@v24
         with:
           workflow: generator.yml
           workflow_conclusion: ""
@@ -110,7 +110,7 @@ jobs:
 
       - name: Download previous artifact
         if: ${{ inputs.use_previous_artifact2 }}
-        uses: dawidd6/action-download-artifact@v21
+        uses: dawidd6/action-download-artifact@v24
         with:
           workflow: generator.yml
           workflow_conclusion: ""
