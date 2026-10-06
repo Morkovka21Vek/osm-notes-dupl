@@ -4,6 +4,7 @@ from collections import defaultdict
 from shapely.geometry import Point, shape
 from shapely.strtree import STRtree
 from pathlib import Path
+from datetime import datetime
 import html
 
 with open("osm-countries.geojson", "r", encoding="utf-8") as f:
@@ -66,7 +67,7 @@ for code, notes in result_closed.items():
     out.mkdir(exist_ok=True, parents=True)
 
     with open(f"{out}/index.html", "w", encoding="utf-8") as file:
-        html = country_template.replace("<!-- Country code -->", code)
+        html = country_template.replace("<!-- Country code -->", code).replace("<!-- Update date-->", datetime.today().strftime('%Y-%m-%d'))
         s = ""
         for l in notes:
             closed = [f'<a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a>' for n in l["c"]]
@@ -106,7 +107,7 @@ for code, notes in result_opened.items():
     out.mkdir(exist_ok=True, parents=True)
 
     with open(f"{out}/index.html", "w", encoding="utf-8") as file:
-        html = country_template.replace("<!-- Country code -->", code)
+        html = country_template.replace("<!-- Country code -->", code).replace("<!-- Update date-->", datetime.today().strftime('%Y-%m-%d'))
         s = ""
         for l in notes:
             opened = [f'<a {"class=commented " if n[1] == 1 else "class=stop_word " if n[1] == 2 else "class=commented stop_word " if n[1] == 3 else "" }href="https://openstreetmap.org/note/{n[0]}" target="_blank" rel="noopener noreferrer">{n[0]}</a>\n' for n in l["o"]]
@@ -127,4 +128,6 @@ with open(f"{out}/index.html", "w", encoding="utf-8") as file:
 
     countries = [f'<a href="./opened/{code}/">{code}</a>' for code, notes in result_opened.items()]
     s = s.replace("<!-- Countries opened list -->", " ".join(countries))
+
+    s = s.replace("<!-- Update date-->", datetime.today().strftime('%Y-%m-%d'))
     file.write(s)
