@@ -2,7 +2,7 @@ import struct
 from collections import defaultdict
 import csv
 
-record = struct.Struct("<IiiBBIBQ")
+record = struct.Struct("<IiiBIBQ")
 
 notes = defaultdict(lambda: {"o": [], "c": [], "time": 0})
 
@@ -12,13 +12,12 @@ with open("notes.bin", "rb") as f:
         if not data:
             break
 
-        note_id, lat, lon, commented, closed, uid, stop_word, time = record.unpack(data)
+        note_id, lat, lon, commented, uid, stop_word, time = record.unpack(data)
         if uid in [3199858, 5060057]: # bot accounts
             continue
-        notes[(lat, lon)]["c" if closed else "o"].append((note_id, commented+stop_word*2))
 
-        if time > notes[(lat, lon)]["time"]:
-            notes[(lat, lon)]["time"] = time
+        notes[(lat, lon)]["c" if uid != 0 else "o"].append((note_id, commented+stop_word*2))
+        notes[(lat, lon)]["time"] = max(time, notes[(lat, lon)]["time"])
 
 with open("dupl_closed_notes.csv", "w", newline="", encoding="utf-8") as f:
     writer = csv.writer(f)
