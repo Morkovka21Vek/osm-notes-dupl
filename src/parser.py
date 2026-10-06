@@ -3,7 +3,7 @@ import struct
 import wordlist
 from datetime import datetime
 
-record = struct.Struct("<IiiBBIBQ") # if id or uid > 2^32-1 use Q
+record = struct.Struct("<IiiBIBQ") # if id or uid > 2^32-1 use Q
 
 with open("notes.bin", "wb") as out:
     for event, elem in ET.iterparse("planet-notes-latest.osn", events=("end",)):
@@ -33,7 +33,6 @@ with open("notes.bin", "wb") as out:
                 int(float(elem.attrib["lat"]) * 10_000_000),
                 int(float(elem.attrib["lon"]) * 10_000_000),
                 commented,
-                int("closed_at" in elem.attrib),
                 int(last_closer_uid),
                 stop_word,
                 int(dt.timestamp())
